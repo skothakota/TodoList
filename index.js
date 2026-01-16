@@ -1,30 +1,29 @@
 // index.js
 const fastify = require("fastify")({ logger: true });
 const cors = require("@fastify/cors");
-const taskRoutes = require("./routes/taskRoutes"); // <- your existing routes file
+const taskRoutes = require("./routes/taskRoutes");
 
 (async () => {
   try {
-    // Allow the React dev server (http://localhost:5173) to call this API
     await fastify.register(cors, {
-      origin: "http://localhost:5173", // adjust if your UI runs elsewhere
+      origin: "http://localhost:5173",
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: false,
     });
 
-    // Register your routes (no prefix since you wanted flat URLs)
+    // Health
+    fastify.get("/health", async () => ({ ok: true }));
+
+    // Register routes
     await fastify.register(taskRoutes);
 
-    // Optional: print all routes to verify endpoints are loaded
-    fastify.ready((err) => {
-      if (err) throw err;
-      console.log(fastify.printRoutes());
-    });
+    // Print routes
+    await fastify.ready();
+    fastify.log.info(fastify.printRoutes());
 
-    // Start server
     const PORT = process.env.PORT || 3000;
-    await fastify.listen({ port: PORT });
+    await fastify.listen({ port: PORT, host: "0.0.0.0" });
     fastify.log.info(`🚀 API running at http://localhost:${PORT}`);
   } catch (err) {
     fastify.log.error(err);
